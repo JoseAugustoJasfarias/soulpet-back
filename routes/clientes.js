@@ -13,6 +13,16 @@ router.get("/clientes", async (req, res) => {
   res.json(listaClientes);
 });
 
+router.get("/clientes/:id/endereco", async (req, res) => {
+  const {id} = req.params
+  const endereco = await Endereco.findOne({ where: { clienteId: id } })
+  if (endereco) {
+    res.json(endereco);
+  } else {
+    res.status(404).json({ message: "Usuário não encontrado." });
+  }
+})
+
 // /clientes/1, 2
 router.get("/clientes/:id", async (req, res) => {
   // SELECT * FROM clientes WHERE id = 1;

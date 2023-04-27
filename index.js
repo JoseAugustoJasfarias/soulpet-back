@@ -25,7 +25,7 @@ app.use(rotasClientes); // Configurar o grupo de rotas no app
 app.use(rotasPets);
 
 // Escuta de eventos (listen)
-app.listen(3000, () => {
+app.listen(3001, () => {
   // Gerar as tabelas a partir do model
   // Force = apaga tudo e recria as tabelas
   connection.sync();

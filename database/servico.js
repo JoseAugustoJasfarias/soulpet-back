@@ -14,7 +14,7 @@ const Servico = connection.define("servico", {
 });
 
 // Relacionamento N:N (Um serviço pode ter N pets)
-Servico.belongsToMany(Pet, { onDelete: "CASCADE" });
-Pet.belongsToMany(Servico);
+Servico.belongsToMany(Pet, { through: "ServicoPet", onDelete: "CASCADE" });
+Pet.belongsToMany(Servico, { through: "ServicoPet" });
 
 module.exports = Servico;

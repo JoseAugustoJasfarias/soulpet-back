@@ -1,27 +1,101 @@
-const Produto = require("../database/produto");
-
-const { Router } = require("express");
+const Produto = require('../database/produto');
+const { Router } = require('express');
 
 const router = Router();
+const Joi = require('joi');
 
-router.get("/produtos", async (req,res) => {
+const produtoSchema = Joi.object({
+    nome: Joi.string().required().messages({
+        'any.required': 'O campo "nome" é obrigatório.',
+        'string.base' : 'O campo "nome" não pode ser númerico. ',
+        'string.empty': 'O campo "nome" não pode ser vazio.'
+    }),
+    preco: Joi.number().min(0).required().messages({
+        'number.base': 'O campo "preço" deve ser um número.',
+        'number.min': 'O campo "preço" deve ser um número maior ou igual a 0.',
+        'any.required': 'O campo "preço" é obrigatório.',
+        'string.empty': 'O campo "preço" não pode ser vazio.'
+    }),
+    descricao: Joi.string().required().messages({
+        'any.required': 'O campo "descrição" é obrigatório.',
+        'string.base' : 'O campo "descrição" não pode ser númerico. ',
+        'string.empty': 'O campo "descrição" não pode ser vazio.'
+    }),
+    desconto: Joi.number().min(0).max(1).required().messages({
+        'number.base': 'O campo "desconto" deve ser um número.',
+        'number.min': 'O campo "desconto" deve ser um número maior ou igual a 0.',
+        'number.max': 'O campo "desconto" deve ser um número menor ou igual a 1.',
+        'any.required': 'O campo "desconto" é obrigatório.',
+        'string.empty': 'O campo "desconto" não pode ser vazio.'
+    }),
+    dataDesconto: Joi.date().greater('now').required().messages({
+        'date.base': 'O campo "dataDesconto" deve ser uma data válida.',
+        'date.greater': 'O campo "dataDesconto" deve ser uma data futura.',
+        'any.required': 'O campo "dataDesconto" é obrigatório.',
+        'string.empty': 'O campo "dataDesconto" não pode ser vazio.'
+    }),
+    categoria: Joi.string().valid('Higiene', 'Brinquedos', 'Conforto').required().messages({
+        'any.only': 'O campo "categoria" deve ser uma das opções: Higiene, Brinquedos ou Conforto.',
+        'any.required': 'O campo "categoria" é obrigatório.',
+        'string.empty': 'O campo "categoria" não pode ser vazio.'
+    })
+});
+
+router.get('/produtos', async (req, res) => {
     const listaProdutos = await Produto.findAll();
     res.json(listaProdutos);
 });
 
-router.get("/produtos/:id", async (req,res) => {
-    const {id} = req.params;
-    const {nome,categoria} = req.query;
-    const produto = await Produto.findByPk(id, 
-        {$or:[
-            {categoria:{ $in : categoria}},
-            {nome: nome}
-        ]});
-    if(produto) {
-        res.status(200).json(pet);
+router.get('/produtos/:id', async (req, res) => {
+    const { id } = req.params;
+    const { nome, categoria } = req.query;
+    const produto = await Produto.findByPk(id, {
+        $or: [{ categoria: { $in: categoria } }, { nome: nome }]
+    });
+    if (produto) {
+        res.status(200).json(produto);
     } else {
-        res.status(404).json({message: "Produto não encontrado"})
+        res.status(404).json({ message: 'Produto não encontrado' });
     }
 });
+
+// Formatar a mensagem de error , removendo a \
+function formatErrorMessage(error) {
+    const messages = error.details.map(detail => {
+        const message = detail.message.replace(/"/g, '');
+        return message.charAt(0).toUpperCase() + message.slice(1);
+    });
+
+    return messages;
+}
+
+router.post('/produtos', async (req, res) => {
+    const { error, value } = produtoSchema.validate(req.body, {
+        abortEarly: false
+    });
+
+    if (error) {
+        const messages = formatErrorMessage(error);
+        return res.status(400).json({ message: messages });
+    }
+
+    try {
+        const novoProduto = await Produto.create({
+            nome: value.nome,
+            preco: value.preco,
+            descricao: value.descricao,
+            desconto: value.desconto,
+            dataDesconto: value.dataDesconto,
+            categoria: value.categoria
+        });
+        res.status(201).json(novoProduto);
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Um erro aconteceu.' });
+    }
+});
+
+
+
 
 module.exports = router;

@@ -14,7 +14,7 @@ router.get("/clientes", async (req, res) => {
 });
 
 router.get("/clientes/:id/endereco", async (req, res) => {
-  const {id} = req.params
+  const { id } = req.params
   const endereco = await Endereco.findOne({ where: { clienteId: id } })
   if (endereco) {
     res.json(endereco);

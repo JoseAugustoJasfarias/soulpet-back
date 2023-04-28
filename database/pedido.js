@@ -6,6 +6,7 @@ const Cliente = require("./cliente");
 const Produto = require("./produto");
 
 
+
 const Pedido = connection.define("pedido", {
   codigo: {
     type: DataTypes.UUID,
@@ -18,9 +19,13 @@ const Pedido = connection.define("pedido", {
     allowNull: false
   }
 });
+
+
 // Associação 1:N (One-to-Many)
 Cliente.hasMany(Pedido);
 Pedido.belongsTo(Cliente);
 Produto.hasMany(Pedido);
 Pedido.belongsTo(Produto);
+
+
 module.exports = Pedido;

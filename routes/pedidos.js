@@ -1,10 +1,13 @@
 const Cliente = require("../database/cliente");
 const Pedido = require ("../database/pedido");
+const Joi = require("joi");
+
 
 const { Router } = require("express");
 
 // Criar o grupo de rotas (/pedidos)
 const router = Router();
+
 
 router.get("/pedidos", async (req, res) => {
   const listaPedidos = await Pedido.findAll();
@@ -67,5 +70,35 @@ router.get("/pedidos/produtos/:id", async (req, res) => {
       res.status(500).json({ message: "Erro ao buscar pedidos." });
     }
   });
+
+// POST
+
+const pedidoSchema = Joi.object({
+  codigo: Joi.string().uuid().required(),
+  quantidade: Joi.number().integer().positive().required(),
+  clienteId: Joi.number().integer().positive().required(),
+
+});
+
+router.post("/pedidos", async (req, res) => {
+  try {
+    // Valida o corpo da requisição
+    const { error } = Joi.array().items(pedidoSchema).validate(req.body);
+
+    if (error) {
+      throw new Error(error.message);
+    }
+
+    // Insere os pedidos no banco de dados
+    const pedidos = req.body;
+    const result = await Pedido.bulkCreate(pedidos);
+
+    res.status(201).json(result);
+  } catch (error) {
+    res.status(400).json({ message: error.message });
+  }
+});
+ 
+
 
   module.exports = router;

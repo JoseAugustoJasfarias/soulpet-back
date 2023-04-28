@@ -3,6 +3,11 @@ const { Router } = require("express");
 
 const router = Router();
 
+router.get("/servicos", async (req, res) => {
+  const listarServicos = await Servico.findAll();
+  res.json(listarServicos);
+})
+
 router.post("/servico", async (req, res) => {
   const { nome, preco } = req.body;
 

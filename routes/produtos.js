@@ -8,7 +8,7 @@ const Joi = require('joi');
 const produtoSchema = Joi.object({
     nome: Joi.string().required().messages({
         'any.required': 'O campo "nome" é obrigatório.',
-        'string.base' : 'O campo "nome" não pode ser númerico. ',
+        'string.base': 'O campo "nome" não pode ser númerico. ',
         'string.empty': 'O campo "nome" não pode ser vazio.'
     }),
     preco: Joi.number().min(0).required().messages({
@@ -19,7 +19,7 @@ const produtoSchema = Joi.object({
     }),
     descricao: Joi.string().required().messages({
         'any.required': 'O campo "descrição" é obrigatório.',
-        'string.base' : 'O campo "descrição" não pode ser númerico. ',
+        'string.base': 'O campo "descrição" não pode ser númerico. ',
         'string.empty': 'O campo "descrição" não pode ser vazio.'
     }),
     desconto: Joi.number().min(0).max(1).required().messages({
@@ -122,6 +122,34 @@ router.put("/produtos/:id", async (req,res) => {
         }
     } catch (err) {
         res.status(500).json("Um erro aconteceu.");
+    }
+});
+
+
+
+router.delete("/produto/:id", async (req, res) => {
+        try {
+        const produto = await Produto.findByPk(req.params.id);
+        if (produto) {
+            await produto.destroy();
+            res.json({ message: "O serviço foi removido.", produto });
+        } else {
+            res.status(404).json({ message: "O serviço não foi encontrado" });
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({ message: "Um erro aconteceu." });
+    }
+});
+
+router.delete("/produtos/deleteAll", async (req, res) => {
+    try {
+        const produtos = await Produto.findAll(); 
+        await Produto.destroy({ where: {} });
+        res.json({ message: "Todos os Produtos foram removidos.", produtos });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Um erro aconteceu." });
     }
 });
 

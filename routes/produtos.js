@@ -1,5 +1,6 @@
 const Produto = require('../database/produto');
 const { Router } = require('express');
+const {Op} = require("sequelize")
 
 const router = Router();
 const Joi = require('joi');
@@ -46,16 +47,26 @@ router.get('/produtos', async (req, res) => {
     res.json(listaProdutos);
 });
 
-router.get('/produtos/:id', async (req, res) => {
-    const { id } = req.params;
-    const { nome, categoria } = req.query;
-    const produto = await Produto.findByPk(id, {
-        $or: [{ categoria: { $in: categoria } }, { nome: nome }]
-    });
-    if (produto) {
-        res.status(200).json(produto);
+router.get("/produtos/busca", async (req, res) => {
+    const {nome,categoria} = req.query;
+    const produtos = await Produto.findAll({where:{ [Op.or] : {
+        nome: {[Op.eq]:nome},categoria: {[Op.eq]:categoria}
+            }
+        }});
+    if(produtos){
+        res.json(produtos);
     } else {
-        res.status(404).json({ message: 'Produto não encontrado' });
+        res.status(404).json({message:"Nenhum produto foi encontrado."})
+    }
+});
+
+router.get('/produtos/:id', async (req, res) => {
+    const {id} = req.params;
+    const produto = await Produto.findByPk(id);
+    if(produto) {
+        res.json(produto);
+    } else {
+        res.status(400).json({message:"Produto não encontrado."});
     }
 });
 
@@ -92,6 +103,25 @@ router.post('/produtos', async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Um erro aconteceu.' });
+    }
+});
+
+router.put("/produtos/:id", async (req,res) => {
+    const {id} = req.params;
+    const {nome,preco,descricao,desconto,dataDesconto,categoria} = req.body;
+    const produto = await Produto.findByPk(id);
+    try {
+        if(produto) {
+            await Produto.update(
+                {nome,preco,descricao,desconto,dataDesconto,categoria},
+                {where : {id:id}}
+            ); 
+            res.status(200).json({message:"Produto editado!", produto});
+        } else {
+            res.status(404).json({message: "Produto não encontrado."})
+        }
+    } catch (err) {
+        res.status(500).json("Um erro aconteceu.");
     }
 });
 

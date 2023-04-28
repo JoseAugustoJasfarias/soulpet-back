@@ -5,8 +5,7 @@ const { v4: uuidv4 } = require('uuid');
 const Cliente = require("./cliente");
 const Produto = require("./produto");
 
-const Cliente = require("./cliente");
-const Produto = require("./produto");
+
 const Pedido = connection.define("pedido", {
   codigo: {
     type: DataTypes.UUID,

@@ -1,5 +1,6 @@
 const Cliente = require("../database/cliente");
 const Endereco = require("../database/endereco");
+const Pet = require("../database/pet");
 
 const { Router } = require("express");
 
@@ -13,11 +14,23 @@ router.get("/clientes", async (req, res) => {
   res.json(listaClientes);
 });
 
+// Endereço do cliente
 router.get("/clientes/:id/endereco", async (req, res) => {
   const { id } = req.params
   const endereco = await Endereco.findOne({ where: { clienteId: id } })
   if (endereco) {
     res.json(endereco);
+  } else {
+    res.status(404).json({ message: "Usuário não encontrado." });
+  }
+})
+
+// Listar pets do cliente
+router.get("/clientes/:id/pets", async (req, res) => {
+  const { id } = req.params
+  const pet = await Pet.findAll({ where: { clienteId: id } })
+  if (pet) {
+    res.json(pet);
   } else {
     res.status(404).json({ message: "Usuário não encontrado." });
   }

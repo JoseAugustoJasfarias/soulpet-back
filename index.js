@@ -3,11 +3,12 @@ const cors = require("cors");
 require("dotenv").config();
 const express = require("express");
 const morgan = require("morgan");
+const mongoLogger = require('./morgan-mongoose');
 
 // Configuração do App
 const app = express();
 app.use(express.json()); // Possibilitar transitar dados usando JSON
-app.use(morgan("dev"));
+app.use(mongoLogger);
 
 // Configurações de acesso
 app.use(cors({ origin: "http://localhost:3000" }));

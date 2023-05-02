@@ -2,6 +2,7 @@ const Cliente = require("../database/cliente");
 const Pet = require("../database/pet");
 
 const { Router } = require("express");
+const Joi = require('joi');
 
 // Criar o grupo de rotas (/pets)
 const router = Router();
@@ -22,10 +23,53 @@ router.get("/pets/:id", async (req, res) => {
   }
 });
 
+const petSchema = Joi.object({
+  nome: Joi.string().required().messages({
+    'any.required': 'O campo "nome" é obrigatório.',
+    'string.empty': 'O campo "nome" não pode ser vazio.',
+    'string.base': 'O campo "nome" não pode ser númerico. ',
+  }),
+  tipo: Joi.string().required().messages({
+    'any.required': 'O campo "tipo" é obrigatório.',
+    'string.empty': 'O campo "tipo" não pode ser vazio.',
+    'string.base': 'O campo "tipo" não pode ser númerico. ',
+  }),
+  porte: Joi.string().required().messages({
+    'any.required': 'O campo "porte" é obrigatório.',
+    'string.empty': 'O campo "porte" não pode ser vazio.',
+    'string.base': 'O campo "porte" não pode ser númerico. ',
+  }),
+  dataNasc: Joi.date().optional(),
+  clienteId: Joi.number().integer().positive().required().messages({
+    'any.required': 'O campo "clienteId" é obrigatório.',
+    'string.empty': 'O campo "clienteId" não pode ser vazio.',
+    'number.base': 'O campo "clienteId" deve ser um número inteiro positivo.',
+    
+  }),
+});
+
+function formatErrorMessage(error) {
+  const messages = {};
+  error.details.forEach(detail => {
+    const key = detail.context.key;
+    const message = detail.message.replace(/"/g, '');
+    messages[key] = message.charAt(0).toUpperCase() + message.slice(1);
+  });
+  return messages;
+}
+
 router.post("/pets", async (req, res) => {
   const { nome, tipo, porte, dataNasc, clienteId } = req.body;
 
   try {
+    // Validar o corpo da requisição
+    const { error } = petSchema.validate(req.body, { abortEarly: false });
+
+    if (error) {
+      const messages = formatErrorMessage(error);
+      return res.status(400).json({ message: messages });
+    }
+
     const cliente = await Cliente.findByPk(clienteId);
     if (cliente) {
       const pet = await Pet.create({ nome, tipo, porte, dataNasc, clienteId });
@@ -34,10 +78,16 @@ router.post("/pets", async (req, res) => {
       res.status(404).json({ message: "Cliente não encontrado." });
     }
   } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "Um erro aconteceu." });
+    if (err.name === "SequelizeValidationError") {
+      res.status(400).json(JSON.parse(err.message));
+    } else {
+      console.log(err);
+      res.status(500).json({ message: "Um erro aconteceu." });
+    }
   }
 });
+
+
 
 router.put("/pets/:id", async (req, res) => {
   // Esses são os dados que virão no corpo JSON

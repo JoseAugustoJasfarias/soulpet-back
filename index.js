@@ -23,6 +23,7 @@ const rotasPets = require("./routes/pets");
 const rotasServicos = require("./routes/servicos");
 const rotasProdutos = require("./routes/produtos");
 const rotasPedidos = require ("./routes/pedidos");
+const rotasAgendamentos= require ("./routes/agendamentos");
 
 // Juntar ao app as rotas dos arquivos
 app.use(rotasClientes); // Configurar o grupo de rotas no app
@@ -30,6 +31,7 @@ app.use(rotasPets);
 app.use(rotasServicos);
 app.use(rotasProdutos);
 app.use(rotasPedidos);
+app.use(rotasAgendamentos);
 
 
 // Escuta de eventos (listen)

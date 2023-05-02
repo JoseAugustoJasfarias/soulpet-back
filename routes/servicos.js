@@ -3,31 +3,63 @@ const { Router } = require("express");
 
 const router = Router();
 
+const Joi = require('joi');
+
 router.get("/servicos", async (req, res) => {
   const listarServicos = await Servico.findAll();
   res.json(listarServicos);
 });
 
-router.post("/servico", async (req, res) => {
-  const { nome, preco } = req.body;
+const sertvicoSchema = Joi.object({
+  nome: Joi.string().required().messages({
+    'any.required': 'O campo "nome" é obrigatório.',
+    'string.base': 'O campo "nome" não pode ser númerico. ',
+    'string.max': 'O campo "nome" não pode ser mairo que 130 caracteres. ',
+    'string.empty': 'O campo "nome" não pode ser vazio.'
+  }),
+  preco: Joi.number().min(0).required().messages({
+    'number.base': 'O campo "preço" deve ser um número.',
+    'number.min': 'O campo "preço" deve ser um número maior ou igual a 0.',
+    'any.required': 'O campo "preço" é obrigatório.',
+    'string.empty': 'O campo "preço" não pode ser vazio.'
+  })
+});
 
-  if (nome && preco) {
-    if (typeof nome !== "string" || typeof preco !== "number" || preco <= 0) {
-      return res.status(400).json({ message: "Dados inválidos." });
+
+function formatErrorMessage(error) {
+  const messages = error.details.map(detail => {
+    const message = detail.message.replace(/"/g, '');
+    return message.charAt(0).toUpperCase() + message.slice(1);
+  });
+
+  return messages;
+}
+
+
+
+router.post("/servico", async (req, res) => {
+  const { error, value } = sertvicoSchema.validate(req.body, {
+    abortEarly: false
+  });
+
+  if (error) {
+    const messages = formatErrorMessage(error);
+    return res.status(400).json({ message: messages });
+  }
+
+  try {
+    const novoServico = await Servico.create({ 
+      nome: value.nome,
+      preco: value.preco
+    });
+    res.status(201).json(novoServico);
+  } catch (err) {
+    console.error(err);
+    if (err.name === "SequelizeValidationError") {
+      res.status(400).json({ message: "Dados inválidos." });
+    } else {
+      res.status(500).json({ message: "Ocorreu um erro." });
     }
-    try {
-      const novoServico = await Servico.create({ nome, preco });
-      res.status(201).json(novoServico);
-    } catch (err) {
-      console.log(err);
-      if (err.name === "SequelizeValidationError") {
-        res.status(400).json({ message: "Dados inválidos." });
-      } else {
-        res.status(500).json({ message: "Ocorreu um erro." });
-      }
-    }
-  } else {
-    res.status(500).json({ message: "Ocorreu um erro." });
   }
 });
 

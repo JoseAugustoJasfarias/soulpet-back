@@ -15,7 +15,7 @@ const Produto = connection.define("produto", {
         allowNull: false,
     },
     desconto: {
-        type: DataTypes.BIGINT,
+        type: DataTypes.DOUBLE,
         allowNull: false,
     },
     dataDesconto: {

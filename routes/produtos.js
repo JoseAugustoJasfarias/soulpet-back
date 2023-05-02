@@ -1,6 +1,6 @@
 const Produto = require('../database/produto');
 const { Router } = require('express');
-const {Op} = require("sequelize")
+const { Op } = require("sequelize")
 
 const router = Router();
 const Joi = require('joi');
@@ -30,10 +30,11 @@ const produtoSchema = Joi.object({
         'string.empty': 'O campo "desconto" não pode ser vazio.'
     }),
     dataDesconto: Joi.date().greater('now').required().messages({
-        'date.base': 'O campo "dataDesconto" deve ser uma data válida.',
-        'date.greater': 'O campo "dataDesconto" deve ser uma data futura.',
+        'date.base': 'O campo "dataDesconto" deve ser uma data válida entre aspas no formato ANO/MES/DIA.',
+        'date.greater': 'O campo "dataDesconto" deve ser uma data futura  data válida entre aspas no formato ANO/MES/DIA.',
         'any.required': 'O campo "dataDesconto" é obrigatório.',
-        'string.empty': 'O campo "dataDesconto" não pode ser vazio.'
+        'string.empty': 'O campo "dataDesconto" não pode ser vazio.',
+       
     }),
     categoria: Joi.string().valid('Higiene', 'Brinquedos', 'Conforto').required().messages({
         'any.only': 'O campo "categoria" deve ser uma das opções: Higiene, Brinquedos ou Conforto.',
@@ -48,25 +49,28 @@ router.get('/produtos', async (req, res) => {
 });
 
 router.get("/produtos/busca", async (req, res) => {
-    const {nome,categoria} = req.query;
-    const produtos = await Produto.findAll({where:{ [Op.or] : {
-        nome: {[Op.eq]:nome},categoria: {[Op.eq]:categoria}
+    const { nome, categoria } = req.query;
+    const produtos = await Produto.findAll({
+        where: {
+            [Op.or]: {
+                nome: { [Op.eq]: nome }, categoria: { [Op.eq]: categoria }
             }
-        }});
-    if(produtos){
+        }
+    });
+    if (produtos) {
         res.json(produtos);
     } else {
-        res.status(404).json({message:"Nenhum produto foi encontrado."})
+        res.status(404).json({ message: "Nenhum produto foi encontrado." })
     }
 });
 
 router.get('/produtos/:id', async (req, res) => {
-    const {id} = req.params;
+    const { id } = req.params;
     const produto = await Produto.findByPk(id);
-    if(produto) {
+    if (produto) {
         res.json(produto);
     } else {
-        res.status(400).json({message:"Produto não encontrado."});
+        res.status(400).json({ message: "Produto não encontrado." });
     }
 });
 
@@ -106,19 +110,30 @@ router.post('/produtos', async (req, res) => {
     }
 });
 
-router.put("/produtos/:id", async (req,res) => {
-    const {id} = req.params;
-    const {nome,preco,descricao,desconto,dataDesconto,categoria} = req.body;
+router.put("/produtos/:id", async (req, res) => {
+    const { id } = req.params;
+    const { nome, preco, descricao, desconto, dataDesconto, categoria } = req.body;
     const produto = await Produto.findByPk(id);
     try {
-        if(produto) {
+        const { error, value } = produtoSchema.validate(req.body, {
+            abortEarly: false
+        }); if (error) {
+            const messages = formatErrorMessage(error);
+            return res.status(400).json({ message: messages });
+        }
+
+        if (!nome || !preco || !descricao || !desconto || !dataDesconto || !categoria) {
+            return res.status(400).json({ message: "Insira todos os campos referentes ao produto." });
+        }
+
+        if (produto) {
             await Produto.update(
-                {nome,preco,descricao,desconto,dataDesconto,categoria},
-                {where : {id:id}}
-            ); 
-            res.status(200).json({message:"Produto editado!", produto});
+                { nome, preco, descricao, desconto, dataDesconto, categoria },
+                { where: { id: id } }
+            );
+            res.status(200).json({ message: "Produto editado!", produto });
         } else {
-            res.status(404).json({message: "Produto não encontrado."})
+            res.status(404).json({ message: "Produto não encontrado." })
         }
     } catch (err) {
         res.status(500).json("Um erro aconteceu.");
@@ -126,9 +141,8 @@ router.put("/produtos/:id", async (req,res) => {
 });
 
 
-
 router.delete("/produto/:id", async (req, res) => {
-        try {
+    try {
         const produto = await Produto.findByPk(req.params.id);
         if (produto) {
             await produto.destroy();
@@ -144,7 +158,7 @@ router.delete("/produto/:id", async (req, res) => {
 
 router.delete("/produtos/deleteAll", async (req, res) => {
     try {
-        const produtos = await Produto.findAll(); 
+        const produtos = await Produto.findAll();
         await Produto.destroy({ where: {} });
         res.json({ message: "Todos os Produtos foram removidos.", produtos });
     } catch (error) {

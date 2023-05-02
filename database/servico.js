@@ -1,6 +1,7 @@
 const { DataTypes } = require("sequelize");
 const { connection } = require("./database");
 const Pet = require("./pet");
+const Agendamento = require("./agendamento");
 
 const Servico = connection.define("servico", {
   nome: {
@@ -14,7 +15,7 @@ const Servico = connection.define("servico", {
 });
 
 // Relacionamento N:N (Um serviço pode ter N pets)
-Servico.belongsToMany(Pet, { through: "ServicoPet", onDelete: "CASCADE" });
-Pet.belongsToMany(Servico, { through: "ServicoPet" });
+Servico.belongsToMany(Pet, { through: Agendamento, onDelete: "CASCADE" });
+Pet.belongsToMany(Servico, { through: Agendamento});
 
 module.exports = Servico;

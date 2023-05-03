@@ -3,43 +3,51 @@ const { Router } = require("express");
 
 const router = Router();
 
-const Joi = require('joi');
-
-router.get("/servicos", async (req, res) => {
-  const listarServicos = await Servico.findAll();
-  res.json(listarServicos);
-});
+const Joi = require("joi");
 
 const sertvicoSchema = Joi.object({
   nome: Joi.string().required().messages({
-    'any.required': 'O campo "nome" é obrigatório.',
-    'string.base': 'O campo "nome" não pode ser númerico. ',
-    'string.max': 'O campo "nome" não pode ser mairo que 130 caracteres. ',
-    'string.empty': 'O campo "nome" não pode ser vazio.'
+    "any.required": 'O campo "nome" é obrigatório.',
+    "string.base": 'O campo "nome" não pode ser númerico. ',
+    "string.max": 'O campo "nome" não pode ser mairo que 130 caracteres. ',
+    "string.empty": 'O campo "nome" não pode ser vazio.',
   }),
   preco: Joi.number().min(0).required().messages({
-    'number.base': 'O campo "preço" deve ser um número.',
-    'number.min': 'O campo "preço" deve ser um número maior ou igual a 0.',
-    'any.required': 'O campo "preço" é obrigatório.',
-    'string.empty': 'O campo "preço" não pode ser vazio.'
-  })
+    "number.base": 'O campo "preço" deve ser um número.',
+    "number.min": 'O campo "preço" deve ser um número maior ou igual a 0.',
+    "any.required": 'O campo "preço" é obrigatório.',
+    "string.empty": 'O campo "preço" não pode ser vazio.',
+  }),
 });
 
-
 function formatErrorMessage(error) {
-  const messages = error.details.map(detail => {
-    const message = detail.message.replace(/"/g, '');
+  const messages = error.details.map((detail) => {
+    const message = detail.message.replace(/"/g, "");
     return message.charAt(0).toUpperCase() + message.slice(1);
   });
 
   return messages;
 }
 
+router.get("/servicos", async (req, res) => {
+  const listarServicos = await Servico.findAll();
+  res.json(listarServicos);
+});
 
+router.get("/servico/:id", async (req, res) => {
+  const { id } = req.params;
+
+  const servico = await Servico.findByPk(id);
+  if (servico) {
+    res.json(servico);
+  } else {
+    res.status(404).json({ message: "Servico não encontrado." });
+  }
+});
 
 router.post("/servico", async (req, res) => {
   const { error, value } = sertvicoSchema.validate(req.body, {
-    abortEarly: false
+    abortEarly: false,
   });
 
   if (error) {
@@ -48,9 +56,9 @@ router.post("/servico", async (req, res) => {
   }
 
   try {
-    const novoServico = await Servico.create({ 
+    const novoServico = await Servico.create({
       nome: value.nome,
-      preco: value.preco
+      preco: value.preco,
     });
     res.status(201).json(novoServico);
   } catch (err) {

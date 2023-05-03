@@ -210,5 +210,33 @@ router.post('/agendamentos', async (req, res) => {
     }
   });
   
+  router.delete('/agendamento/', async (req, res) => {
+    res.json({ message: 'É necessário fornecer o ID do Serviço'});
+  });
+  
+
+  router.delete('/agendamento/:servicoId', async (req, res) => {
+    const { servicoId } = req.params;
+  
+    if (isNaN(servicoId)) {
+      return res.status(400).json({ message: 'O ID do serviço deve ser um número.' });
+    }
+  
+    try {
+      const agendamento = await Agendamento.findOne({ where: { servicoId } });
+  
+      if (!agendamento) {
+        return res.status(404).json({ message: `Agendamento com ID ${servicoId} não encontrado.` });
+      }
+  
+      await Agendamento.destroy({ where: { servicoId } });
+  
+      res.json({ message: 'Agendamento apagado com sucesso!', agendamento });
+    } catch (err) {
+      console.log(err);
+      return res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+  });
+  
 
 module.exports = router;

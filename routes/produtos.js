@@ -33,8 +33,7 @@ const produtoSchema = Joi.object({
         'date.base': 'O campo "dataDesconto" deve ser uma data válida entre aspas no formato ANO/MES/DIA.',
         'date.greater': 'O campo "dataDesconto" deve ser uma data futura  data válida entre aspas no formato ANO/MES/DIA.',
         'any.required': 'O campo "dataDesconto" é obrigatório.',
-        'string.empty': 'O campo "dataDesconto" não pode ser vazio.',
-       
+        'string.empty': 'O campo "dataDesconto" não pode ser vazio.',  
     }),
     categoria: Joi.string().valid('Higiene', 'Brinquedos', 'Conforto').required().messages({
         'any.only': 'O campo "categoria" deve ser uma das opções: Higiene, Brinquedos ou Conforto.',
@@ -151,7 +150,7 @@ router.delete("/produto/:id", async (req, res) => {
             res.status(404).json({ message: "O serviço não foi encontrado" });
         }
     } catch (error) {
-        console.log(error);
+        console.error(error);
         res.status(500).json({ message: "Um erro aconteceu." });
     }
 });

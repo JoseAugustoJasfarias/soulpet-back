@@ -2,10 +2,10 @@ const Cliente = require('../database/cliente');
 const Pedido = require('../database/pedido');
 const Produto = require('../database/produto'); // adicionado
 const Joi = require('joi');
-const { Sequelize, ValidationError } = require("sequelize");
-
+const { Sequelize, ValidationError } = require('sequelize');
+const idSchema = Joi.number().integer().required();
+const { body, check, param, validationResult } = require('express-validator');
 const { Router } = require('express');
-
 // Criar o grupo de rotas (/pedidos)
 const router = Router();
 
@@ -100,7 +100,6 @@ const pedidoSchema = Joi.object({
     'number.base': 'O campo "clientId" deve ser um número inteiro positivo.'
   }),
   produtoId: Joi.number().integer().positive().required().messages({
-
     'any.required': 'O campo "produtoId" é obrigatório.',
     'string.empty': 'O campo "produtoId" não pode ser vazio.',
     'number.base': 'O campo "produtoId" deve ser um número inteiro positivo.'
@@ -123,16 +122,25 @@ function formatErrorMessage(error) {
   return messages.join(', ');
 }
 
-
-router.post("/pedidos", async (req, res) => {
+router.post('/pedidos', async (req, res) => {
   // Coletar os dados do req.body
   const { pedidos } = req.body;
 
   // Verificar se pedidos está definido e não vazio
   if (!pedidos || pedidos.length === 0) {
-    return res
-      .status(400)
-      .json({ message: "O corpo da requisição deve conter pelo menos um pedido." });
+    return res.status(400).json({
+      message: 'O corpo da requisição deve conter pelo menos um pedido.',
+      example: {
+        pedidos: [
+          {
+            codigo: '6b56c0de-59b8-4c64-a116-6e10a79e50c1',
+            quantidade: 'numeroDaQuantidade',
+            clienteId: 'numeroIDCliente',
+            produtoId: 'numeroIDProduto'
+          }
+        ]
+      }
+    });
   }
 
   // Validar os dados de entrada
@@ -148,76 +156,80 @@ router.post("/pedidos", async (req, res) => {
     // Insere os pedidos no banco de dados
     const result = await Pedido.bulkCreate(pedidos);
 
-    res
-      .status(201)
-      .json({ message: "Pedidos criados com sucesso!", result });
+    res.status(201).json({ message: 'Pedidos criados com sucesso!', result });
   } catch (error) {
     // Verifica se o erro é de constraint de chave estrangeira
-    if (error.name === "SequelizeForeignKeyConstraintError") {
-      res.status(400).json({ message: "Cliente não encontrado." });
+    if (error.name === 'SequelizeForeignKeyConstraintError') {
+      res.status(400).json({ message: 'Cliente não encontrado.' });
     } else {
       // Verifica se o erro é de constraint de chave única
-      if (error.name === "SequelizeUniqueConstraintError") {
+      if (error.name === 'SequelizeUniqueConstraintError') {
         res
           .status(400)
-          .json({ message: "Já existe um pedido com o mesmo número." });
+          .json({ message: 'Já existe um pedido com o mesmo número.' });
       } else {
         console.log(error);
-        res.status(500).json({ message: "Um erro aconteceu." });
+        res.status(500).json({ message: 'Um erro aconteceu.' });
       }
     }
   }
 });
-
 
 // Alterar pedido por Id
 const validarBody = (req, res, next) => {
   const schema = Joi.object({
     quantidade: Joi.number().required(),
     clienteId: Joi.number().required(),
-    produtoId: Joi.number().required(),
+    produtoId: Joi.number().required()
   }).unknown(true);
 
   const { error } = schema.validate(req.body, { abortEarly: false });
   if (error) {
-    const message = "Erro de validação: " + formatErrorMessage(error);
+    const message = 'Erro de validação: ' + formatErrorMessage(error);
     return res.status(400).json({ message });
   }
 
   next();
 };
 
-
-
-router.put("/pedidos/:codigo", validarBody, async (req, res) => {
+router.put('/pedidos/:codigo', validarBody, async (req, res) => {
   const { codigo } = req.params;
   const { quantidade, clienteId, produtoId } = req.body;
   try {
     const schema = Joi.object({
       quantidade: Joi.number().required(),
       clienteId: Joi.number().required(),
-      produtoId: Joi.number().required(),
+      produtoId: Joi.number().required()
     }).unknown(true);
 
-    const { error } = schema.validate({ quantidade, clienteId, produtoId }, { abortEarly: false });
+    const { error } = schema.validate(
+      { quantidade, clienteId, produtoId },
+      { abortEarly: false }
+    );
     if (error) {
-      const message = "Erro de validação: " + formatErrorMessage(error);
+      const message = 'Erro de validação: ' + formatErrorMessage(error);
       return res.status(400).json({ message });
     }
 
     const pedido = await Pedido.findOne({ where: { codigo } });
     if (!pedido) {
-      return res.status(404).json({ message: "Pedido não encontrado." });
+      return res.status(404).json({ message: 'Pedido não encontrado.' });
     }
 
     const cliente = await Cliente.findOne({ where: { id: clienteId } });
     if (!cliente) {
-      return res.status(404).json({ message: "Cliente não encontrado para o id fornecido. Lembre-se, o id do cliente deve ser numérico." });
+      return res.status(404).json({
+        message:
+          'Cliente não encontrado para o id fornecido. Lembre-se, o id do cliente deve ser numérico.'
+      });
     }
 
     const produto = await Produto.findOne({ where: { id: produtoId } });
     if (!produto) {
-      return res.status(404).json({ message: "Produto não encontrado para o id fornecido. Lembre-se, o id do produto deve ser numérico." });
+      return res.status(404).json({
+        message:
+          'Produto não encontrado para o id fornecido. Lembre-se, o id do produto deve ser numérico.'
+      });
     }
 
     await Pedido.update(
@@ -225,22 +237,94 @@ router.put("/pedidos/:codigo", validarBody, async (req, res) => {
       { where: { codigo } }
     );
     const updatedPedido = await Pedido.findOne({ where: { codigo } });
-    res.json({ message: "Pedido atualizado com sucesso.", data: updatedPedido });
+    res.json({
+      message: 'Pedido atualizado com sucesso.',
+      data: updatedPedido
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Erro ao atualizar pedido." });
+    res.status(500).json({ message: 'Erro ao atualizar pedido.' });
+  }
+});
+
+router.delete('/pedido/:codigo', async (req, res) => {
+  try {
+    const { codigo } = req.params;
+    const pedido = await Pedido.findOne({ where: { codigo } });
+
+    if (pedido) {
+      await pedido.destroy();
+      res.json({ message: 'O pedido foi removido com sucesso', pedido });
+    } else {
+      res.status(404).json({ message: 'O pedido não foi encontrado' });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Um erro aconteceu' });
+  }
+});
+
+router.delete('/pedidos/clientes', async (req, res) => {
+  res.json({ message: 'É necessário fornecer o ID do CLiente'});
+});
+
+router.delete('/pedidos/produtos', async (req, res) => {
+  res.json({ message: 'É necessário fornecer o ID do Produto'});
+});
+
+router.delete('/pedidos/clientes/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pedidosCliente = await Pedido.findAll({ where: { clienteId: id } });
+
+    if (pedidosCliente.length > 0) {
+      await Pedido.destroy({ where: { clienteId: id } });
+      res.json({
+        message: `Todos os pedidos do cliente ${id} foram removidos com sucesso`,
+        deletedPedidos: pedidosCliente
+      });
+    } else if (isNaN(id)) {
+      res.status(404).json({
+        message: `O ID deve ser um número inteiro`
+      });
+    } else {
+      res.status(404).json({
+        message: `Nenhum pedido foi encontrado para o cliente com o ID ${id}`
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Um erro aconteceu' });
+  }
+});
+
+router.delete('/pedidos/produtos/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const pedidosProduto = await Pedido.findAll({ where: { produtoId: id } });
+
+    if (pedidosProduto.length > 0) {
+      await Pedido.destroy({ where: { produtoId: id } });
+      res.json({
+        message: `Todos os pedidos com o ID ${id} do produto foram removidos com sucesso`,
+        deletedPedidos: pedidosProduto
+      });
+    } else if (isNaN(id)) {
+      res.status(404).json({
+        message: `O ID deve ser um número inteiro`
+      });
+    } else {
+      res.status(404).json({
+        message: `Nenhum pedido foi encontrado para o produto com o ID ${id}`
+      });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Um erro aconteceu' });
   }
 });
 
 
-
-
-
-
-
-
-
 module.exports = router;
-
-
-

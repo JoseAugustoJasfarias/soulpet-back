@@ -2,9 +2,8 @@ const Cliente = require('../database/cliente');
 const Pedido = require('../database/pedido');
 const Produto = require('../database/produto'); // adicionado
 const Joi = require('joi');
-const { Sequelize, ValidationError } = require('sequelize');
-const idSchema = Joi.number().integer().required();
-const { body, check, param, validationResult } = require('express-validator');
+
+
 const { Router } = require('express');
 // Criar o grupo de rotas (/pedidos)
 const router = Router();

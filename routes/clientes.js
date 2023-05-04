@@ -1,7 +1,7 @@
 const Cliente = require("../database/cliente");
 const Endereco = require("../database/endereco");
 const Pet = require("../database/pet");
-
+const pdfDoc = require('pdfkit');
 const { Router } = require("express");
 const Joi = require('joi');
 const Sequelize = require('sequelize');
@@ -199,5 +199,48 @@ router.delete("/clientes/:id", async (req, res) => {
     res.status(500).json({ message: "Um erro aconteceu." });
   }
 });
+
+
+router.get('/relatorio', async (req, res) => {
+
+  const relatorio = await Cliente.findAll({ include: [Endereco, Pet] });
+
+  const doc = new pdfDoc();
+
+  
+  res.setHeader('Content-Disposition', 'attachment; filename="relatorioclientes.pdf"');
+
+  
+  doc.text('Relatório de clientes\n\n\n');
+  relatorio.forEach(cliente => {
+
+    doc.text(`Nome: ${cliente.nome}`);
+    doc.text(`Telefone: ${cliente.telefone}`);
+    doc.text(`Email: ${cliente.email}`);
+    doc.text(`Rua: ${cliente.endereco.rua}`);
+    doc.text(`Número: ${cliente.endereco.numero}`);
+    doc.text(`Cidade: ${cliente.endereco.cidade}`);
+    doc.text(`CEP: ${cliente.endereco.rep}`);
+    doc.text(`UF: ${cliente.endereco.uf}`);
+
+    if (cliente.pets && cliente.pets.length > 0) {
+      doc.text('Pets:');
+      doc.text(`Quantidade de pets: ${cliente.pets.length}`);
+      cliente.pets.forEach((pet) => {
+        doc.text(`${pet.nome} - ${pet.tipo}`);
+      });
+    }
+
+    doc.text('\n\n\n');
+  });
+
+ 
+  res.setHeader('Content-Type', 'application/pdf');
+  doc.pipe(res);
+  doc.end();
+
+
+});
+
 
 module.exports = router;

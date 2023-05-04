@@ -54,7 +54,7 @@ router.post('/agendamentos', async (req, res) => {
             {
               servicoId: 'numeroID',
               realizado: 'statusAgendamento',
-              dataAgendada: 'data no formato ANO/MES/DIA',
+              dataAgendada: 'data no formato entre aspas ANO/MES/DIA',
               petId: 'numeroIDPet'
             }
           ]

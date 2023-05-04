@@ -2,6 +2,11 @@ const { DataTypes } = require("sequelize");
 const { connection } = require("./database");
 
 const Agendamento = connection.define("agendamento", {
+  id: {
+    type: DataTypes.INTEGER,
+    primaryKey: true,
+    autoIncrement: true
+  },
   dataAgendada: {
     type: DataTypes.DATEONLY,
     allowNull: false,
@@ -12,7 +17,5 @@ const Agendamento = connection.define("agendamento", {
     defaultValue: false,
   },
 });
-
-
 
 module.exports = Agendamento;

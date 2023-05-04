@@ -81,13 +81,13 @@ router.get('/pedidos/clientes/:id', async (req, res) => {
 // POST
 
 const pedidoSchema = Joi.object({
-  codigo: Joi.string().uuid({ version: 'uuidv4' }).required().messages({
-    'any.required': 'O campo "codigo" é obrigatório.',
-    'string.uuid': 'O campo "codigo" deve ser um UUID válido.',
-    'string.empty': 'O campo "codigo" não pode ser vazio.',
-    'string.base': 'O campo "codigo" não pode ser numérico.',
-    'string.guid': 'O campo "codigo" deve ser um UUID válido.'
-  }),
+  // //codigo: Joi.string().uuid({ version: 'uuidv4' }).required().messages({
+  //   'any.required': 'O campo "codigo" é obrigatório.',
+  //   'string.uuid': 'O campo "codigo" deve ser um UUID válido.',
+  //   'string.empty': 'O campo "codigo" não pode ser vazio.',
+  //   'string.base': 'O campo "codigo" não pode ser numérico.',
+  //   'string.guid': 'O campo "codigo" deve ser um UUID válido.'
+  // }),
   quantidade: Joi.number().integer().positive().required().messages({
     'any.required': 'O campo "quantidade" é obrigatório.',
     'number.base': 'O campo "quantidade" deve ser um número inteiro positivo.',
